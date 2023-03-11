@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>JS Tool</title>
+	<style>
+		/*.removeParamBtn{
+			display: none;
+		}*/
+		*{
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+			font-size: 16px;
+		}
+		.main-wrapper{
+			display: flex;
+
+		}
+		#testcaseFunction{
+			width: 500px;
+		    border: solid 1px #ccc;
+		    padding: 20px;
+		}
+		#funText{
+			color: blue;
+			font-style: italic;
+			
+		}
+		#funName{
+			width: 160px;
+		    border-width: 0 0 1px 0;
+		    border-color: #000;
+		    color: green;
+		}
+		#funParams > input{
+			width: 160px;
+		    border-width: 0 0 1px 0;
+		    border-color: #000;
+		    color: #d63300;
+		}
+		#funParams > input:focus, #funName:focus{
+			outline: 0;
+			border-width: 0 0 1px 0;
+		}
+		#codelogics{
+			width: 100%;
+		    border: solid 1px #ccc;
+		    min-height: 320px;
+		    resize: none;
+		    margin-top: 10px;
+		    padding: 10px;
+
+		}
+		#codelogics:focus{
+			outline: 0;
+			border: solid 1px #999;
+		}
+
+		.testcasetb{
+			width: 500px;
+			/*border-collapse: collapse;*/
+		}
+		#taskTable{
+			width: 100%;
+			border-collapse: collapse;
+		}
+		#taskTable th{
+			background-color: #f5f5f5;
+		}
+		#taskTable th, #taskTable td{
+			border: solid 1px #ccc;
+			padding: 5px 10px;
+		}
+		.arguments{
+			width: 100%;
+		    border: solid 1px #ccc;
+		    height: 30px;
+		    padding: 10px;
+		}
+		.arguments:focus{
+			outline: 0;
+			border-color: #222;
+		}
+		.btns{
+			background: #00bcd4;
+		    color: #fff;
+		    padding: 5px 25px;
+		    border: solid 1px #00bcd4;
+		    border-radius: 5px;
+		    margin-top: 10px;
+		    cursor: pointer;
+		}
+		.testCaseList{
+			flex: 1 0 0%;
+		}
+		#testlisttable{
+			width: 100%;
+			border-collapse: collapse;		
+		}
+		#testlisttable tr th{
+			background-color: #f5f5f5;
+			text-align: left;
+			padding: 5px 10px;
+			text-transform: capitalize;
+		}
+		#testlisttable tr th, #testlisttable tr td{
+			border: solid 1px #ccc;
+			padding: 5px 10px;
+		}
+	</style>
+</head>
+<body>
+
+	<main class="main-wrapper">
+		<div id="testcaseFunction">
+			<div class="funStart">
+				<span id="funText">function</span>
+				<input type="text" id="funName" />
+				<span id="funParams">
+					<span>(</span>
+					<input type="text" id="funArg" />
+					<span>)</span>
+					<span class="curlybraces">{</span>
+				</span>
+			</div>
+			<textarea id="codelogics"></textarea>
+			<div class="funEnd">
+				<span class="curlybraces">}</span>
+			</div>
+			<button id="validate" class="btns">Add Your Code</button>
+		</div>
+
+		
+		<div class="testcasetb">
+			<table id="taskTable">
+				<tr>
+					<th align="left">Parameter Name</th>
+					<th align="left">Arguments</th>
+					<!-- <th align="left">Add Params</th> -->
+				</tr>
+				
+			</table>
+			<button id="addTestbtn" class="btns">Add</button>
+		</div>
+
+		<div class="testCaseList">
+			<table id="testlisttable">
+				
+			</table>
+			<button id="validateCodetest" class="btns">Validate Testcase</button>
+		</div>
+	</main>
+	
+
+
+<script>
+
+	let testCase = [];
+	let codeLogicNode = {}; 
+	let _taskTable = document.getElementById("taskTable");
+	// let _addParamsBtn = document.getElementsByClassName("addParamBtn")[0];
+	let _addTestBtn = document.getElementById("addTestbtn");
+	let _validateBtn = document.getElementById("validate");
+	let _funName = document.getElementById("funName");
+	let _funArg = document.getElementById("funArg");
+	let _codelogics = document.getElementById("codelogics");
+	let _testlisttable = document.getElementById("testlisttable");
+	let _testTitle = document.getElementById("testTitle");
+	let _validateCodetest = document.getElementById("validateCodetest");
+
+
+	function loadJs(){
+		let testCaseProps = {};
+		if(_funName.value.trim() !== "" && _funArg.value.trim() !== ""  && _codelogics.value.trim() !== "" ){
+			let convertFunName = _funName.value.trim().replace(/-|\s/g,"");
+			let getArgument = _funArg.value.trim().replace(/\s/g,"").split(",");
+
+			//set logical objects
+			codeLogicNode.funName = convertFunName;
+			codeLogicNode.argumentsVal = getArgument;
+			codeLogicNode.getCode = `${_codelogics.value}`;
+			
+			
+			_codelogics.value = "";
+			_funName.value = "";
+			_funArg.value = "";
+
+			//create test case params and arguments
+			for(let i = 0; i < getArgument.length; i++){
+				testCaseProps[getArgument[i]] = null;
+			}
+			addParams(testCaseProps);
+			
+		}else{
+			alert("Code input should not be empty...!")
+		}
+
+		
+	}
+
+	function addParams(propsObj){
+		for(let key in propsObj){
+			let _tr = document.createElement("tr");
+			let _td1 = document.createElement("td");
+			let _td2 = document.createElement("td");
+			let _paramSpan = document.createElement("span");
+			let _inputArgum = document.createElement("input");
+			
+			_paramSpan.setAttribute("class", 'parameter');
+			_inputArgum.setAttribute("class", 'arguments');
+			_paramSpan.innerText = key;
+
+			_td1.append(_paramSpan);
+			_td2.append(_inputArgum);
+			_tr.append(_td1, _td2);
+			_taskTable.append(_tr);
+
+		}
+	}
+	
+
+	function addtestcase(){
+		let settestCaseProps = {};
+		let _parameter = document.getElementsByClassName("parameter");
+		let _argument = document.getElementsByClassName("arguments");
+		for(let p = 0; p<_parameter.length; p++){
+			if(_argument[p].value.trim() !== ""){
+				settestCaseProps[_parameter[p].innerText] = JSON.parse(_argument[p].value);
+				
+				_argument[p].value = '';
+			}
+			
+		}
+		settestCaseProps.testCaseStatus = null;
+		testCase.push(settestCaseProps);
+		loadListTest(testCase);
+	}
+
+	function loadListTest(testDatalist){
+		_testlisttable.innerHTML = "";
+		let _testTitle = document.createElement("tr");
+		for(let key in testDatalist[0]){
+			let _th = document.createElement("th");
+			_th.innerText = key;
+			_testTitle.append(_th);
+		}
+		_testlisttable.append(_testTitle);
+		
+		let _listRow = testDatalist.map((item, inx)=>{
+			let _td = "";
+		 	for(let key in testDatalist[inx]){
+				_td += `<td class='statusTest'>${JSON.stringify(testDatalist[inx][key])}</td>`
+			}
+			return `<tr>${_td}</tr>`;
+		}).join("");
+
+		// console.log(_listRow);
+		_testlisttable.innerHTML += _listRow;
+	}
+
+	//Validate logical code data
+	function validateCode(testCodeObj){
+		const script = document.createElement("script");
+		script.textContent = `
+			function ${testCodeObj.funName}(${testCodeObj.argumentsVal}){
+				${testCodeObj.getCode}
+			}
+			let runStatus = testCase.map((item, indx)=>{
+				let setArr = [];
+				let status = null;
+				for(let key in testCase[indx]){
+					setArr.push(testCase[indx][key])
+				}
+				status = ${testCodeObj.funName}(...setArr);
+				item.testCaseStatus = status;
+				return item;
+			}) 
+
+			console.log(runStatus);
+			loadListTest(runStatus);
+		`;
+		document.body.appendChild(script);
+
+		
+	}
+
+
+
+
+
+	_validateBtn.addEventListener("click", loadJs);
+	_addTestBtn.addEventListener("click", addtestcase);
+	_validateCodetest.addEventListener("click", validateCode.bind(null, codeLogicNode))
+
+
+</script>
+</body>
+</html>
